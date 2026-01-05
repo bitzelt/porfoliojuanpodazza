@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Paleta Suave Responsiva</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js"></script>
+</head>
+<body style="margin:0; padding:0; overflow:hidden;">
+<script>
+let video;
+let palette = [];
+
+function setup() {
+  // Canvas del tamaño de la ventana
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+
+  // Configurar cámara: preferencia por cámara trasera (facingMode: environment)
+  let constraints = {
+    video: {
+      facingMode: { exact: "environment" }, // cámara principal en móviles
+      width: { ideal: windowWidth },
+      height: { ideal: windowHeight }
+    },
+    audio: false
+  };
+  video = createCapture(constraints);
+  video.size(width, height);
+  video.hide();
+
+  // Paleta original (RGB)
+  palette = [
+    color(111, 114, 181),  // violeta
+    color(224, 106, 45),   // naranja
+    color(199, 216, 75),   // amarillo
+    color(0, 0, 0)         // negro
+  ];
+}
+
+function draw() {
+  background(0);
+  video.loadPixels();
+  loadPixels();
+
+  for (let y = 0; y < video.height; y++) {
+    for (let x = 0; x < video.width; x++) {
+      let index = (x + y * video.width) * 4;
+      let r = video.pixels[index];
+      let g = video.pixels[index + 1];
+      let b = video.pixels[index + 2];
+
+      let gray = (r + g + b) / 3;
+
+      // Posterización suave
+      let t = gray / 255 * (palette.length - 1);
+      let lower = floor(t);
+      let upper = ceil(t);
+      let mixFactor = t - lower;
+
+      let c = lerpColor(palette[lower], palette[upper], mixFactor);
+
+      pixels[index] = red(c);
+      pixels[index + 1] = green(c);
+      pixels[index + 2] = blue(c);
+      pixels[index + 3] = 255;
+    }
+  }
+
+  updatePixels();
+}
+
+// Hacer responsivo al cambiar tamaño de ventana
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  video.size(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>
